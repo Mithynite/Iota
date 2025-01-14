@@ -11,6 +11,7 @@ import java.util.List;
 
 /**
  * Maps an object's fields and annotations (e.g., @Column) to database tables.
+ * Also handles mapping Enums between database values and Java Enum types.
  */
 public class ReflectionUtils {
 
@@ -51,7 +52,14 @@ public class ReflectionUtils {
             Column column = getColumnAnnotation(field);
             if (column != null) {
                 field.setAccessible(true);
-                values.add(field.get(entity));
+                Object value = field.get(entity);
+
+                // Handle Enum fields (convert to String for database storage)
+                if (field.getType().isEnum() && value != null) {
+                    value = ((Enum<?>) value).name(); // Convert Enum to String (e.g., Gender.MALE -> "MALE")
+                }
+
+                values.add(value);
             }
         }
         return values;
@@ -64,7 +72,14 @@ public class ReflectionUtils {
             Column column = getColumnAnnotation(field);
             if (column != null && !field.isAnnotationPresent(Id.class)) {
                 field.setAccessible(true);
-                values.add(field.get(entity));
+                Object value = field.get(entity);
+
+                // Handle Enum fields (convert to String for database storage)
+                if (field.getType().isEnum() && value != null) {
+                    value = ((Enum<?>) value).name();
+                }
+
+                values.add(value);
             }
         }
         return values;
@@ -83,6 +98,12 @@ public class ReflectionUtils {
             Column column = getColumnAnnotation(field);
             if (column != null) {
                 Object value = rs.getObject(column.name());
+
+                // Handle Enum fields (convert from String to Enum for Java field)
+                if (field.getType().isEnum() && value != null) {
+                    value = Enum.valueOf((Class<Enum>) field.getType(), value.toString()); // Convert String to Enum
+                }
+
                 field.setAccessible(true);
                 field.set(entity, value);
             }

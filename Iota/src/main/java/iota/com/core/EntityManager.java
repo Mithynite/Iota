@@ -8,7 +8,7 @@ import java.util.List;
 
 /***
  * Performs CRUD operations (save, update, delete, findById, findAll) for entity classes.
- * Uses reflection (via ReflectionUtils) to map an object's fields and annotations (e.g., @Column) to database tables
+ * Uses reflection (via ReflectionUtils) to map an object's fields and annotations (e.g., @Column) to database tables.
  */
 public class EntityManager {
     private final Connection connection;
@@ -21,6 +21,7 @@ public class EntityManager {
     public <T> void persist(T entity) throws Exception {
         String sql = QueryBuilder.buildInsertQuery(entity);
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            // Bind parameters, converting enums to strings if necessary
             QueryBuilder.bindParametersForInsert(stmt, entity);
             stmt.executeUpdate();
         }
@@ -33,6 +34,7 @@ public class EntityManager {
             stmt.setObject(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
+                    // Map result set to entity, including enum handling
                     return (T) ReflectionUtils.mapResultSetToEntity(rs, clazz);
                 }
             }
@@ -53,6 +55,7 @@ public class EntityManager {
     public <T> void update(T entity) throws Exception {
         String sql = QueryBuilder.buildUpdateQuery(entity);
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            // Bind parameters, converting enums to strings if necessary
             QueryBuilder.bindParametersForUpdate(stmt, entity);
             stmt.executeUpdate();
         }

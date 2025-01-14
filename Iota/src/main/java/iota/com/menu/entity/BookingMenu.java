@@ -9,6 +9,7 @@ import iota.com.model.Room;
 import iota.com.service.BookingManager;
 import iota.com.service.CustomerManager;
 import iota.com.service.RoomManager;
+import iota.com.utils.ValidationUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -44,7 +45,9 @@ public class BookingMenu {
     private void createBooking() {
         try {
             System.out.print("Enter Customer ID: ");
-            Long customerId = Long.parseLong(scanner.nextLine());
+            String customerIdInput = scanner.nextLine();
+            long customerId = Long.parseLong(customerIdInput);
+            ValidationUtils.validatePositive(customerId, "Customer ID");
             Customer customer = customerManager.findCustomerById(customerId);
 
             if (customer == null) {
@@ -53,7 +56,9 @@ public class BookingMenu {
             }
 
             System.out.print("Enter Room ID: ");
-            Long roomId = Long.parseLong(scanner.nextLine());
+            String roomIdInput = scanner.nextLine();
+            long roomId = Long.parseLong(roomIdInput);
+            ValidationUtils.validatePositive(roomId, "Room ID");
             Room room = roomManager.findRoomById(roomId);
 
             if (room == null) {
@@ -65,20 +70,21 @@ public class BookingMenu {
             }
 
             System.out.print("Enter Check-In Date (yyyy-MM-dd): ");
-            Date checkInDate = dateFormat.parse(scanner.nextLine());
+            String checkInDateInput = scanner.nextLine();
+            ValidationUtils.validateDate(checkInDateInput, "Check-In Date");
+            Date checkInDate = dateFormat.parse(checkInDateInput);
 
             System.out.print("Enter Check-Out Date (yyyy-MM-dd): ");
-            Date checkOutDate = dateFormat.parse(scanner.nextLine());
+            String checkOutDateInput = scanner.nextLine();
+            ValidationUtils.validateDate(checkOutDateInput, "Check-Out Date");
+            Date checkOutDate = dateFormat.parse(checkOutDateInput);
 
             if (!checkInDate.before(checkOutDate)) {
                 System.out.println("Check-Out Date must be after Check-In Date.");
                 return;
             }
 
-            System.out.print("Enter Total Amount: ");
-            float totalAmount = Float.parseFloat(scanner.nextLine());
-
-            bookingManager.createBooking(customer, room, checkInDate, checkOutDate, totalAmount);
+            bookingManager.createBooking(customer, room, checkInDate, checkOutDate, 0);
             System.out.println("Booking created successfully!");
         } catch (Exception e) {
             System.err.println("Error while creating booking: " + e.getMessage());
@@ -91,7 +97,9 @@ public class BookingMenu {
     private void listBookingsForCustomer() {
         try {
             System.out.print("Enter Customer ID: ");
-            Long customerId = Long.parseLong(scanner.nextLine());
+            String customerIdInput = scanner.nextLine();
+            long customerId = Long.parseLong(customerIdInput);
+            ValidationUtils.validatePositive(customerId, "Customer ID");
             List<Booking> bookings = bookingManager.getBookingsForCustomer(customerId);
 
             if (bookings.isEmpty()) {
@@ -112,7 +120,9 @@ public class BookingMenu {
     private void cancelBooking() {
         try {
             System.out.print("Enter Booking ID to cancel: ");
-            Long bookingId = Long.parseLong(scanner.nextLine());
+            String bookingIdInput = scanner.nextLine();
+            long bookingId = Long.parseLong(bookingIdInput);
+            ValidationUtils.validatePositive(bookingId, "Booking ID");
             bookingManager.cancelBooking(bookingId);
             System.out.println("Booking canceled successfully!");
         } catch (Exception e) {
@@ -126,7 +136,9 @@ public class BookingMenu {
     private void updateBookingStatus() {
         try {
             System.out.print("Enter Booking ID: ");
-            Long bookingId = Long.parseLong(scanner.nextLine());
+            String bookingIdInput = scanner.nextLine();
+            long bookingId = Long.parseLong(bookingIdInput);
+            ValidationUtils.validatePositive(bookingId, "Booking ID");
 
             System.out.println("Select New Status:");
             for (BookingStatus status : BookingStatus.values()) {
@@ -134,15 +146,9 @@ public class BookingMenu {
             }
             System.out.print("Enter Status: ");
             String newStatusString = scanner.nextLine();
+            ValidationUtils.validateEnum(BookingStatus.class, newStatusString, "Booking Status");
 
-            BookingStatus newStatus;
-            try {
-                newStatus = BookingStatus.valueOf(newStatusString.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                System.out.println("Invalid status. Please choose a valid status.");
-                return;
-            }
-
+            BookingStatus newStatus = BookingStatus.valueOf(newStatusString.toUpperCase());
             bookingManager.updateBookingStatus(bookingId, newStatus);
             System.out.println("Booking status updated to " + newStatus.name() + " successfully!");
         } catch (Exception e) {

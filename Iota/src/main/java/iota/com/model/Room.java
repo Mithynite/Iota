@@ -11,10 +11,10 @@ public class Room {
     private Long id;
 
     @Column(name = "room_number", canBeNull = false)
-    private String roomNumber;
+    private Integer roomNumber;
 
     @Column(name = "room_type", canBeNull = false)
-    private String roomType;
+    private RoomType roomType;
 
     @Column(name = "price_per_night", canBeNull = false)
     private float pricePerNight;
@@ -22,7 +22,10 @@ public class Room {
     @Column(name = "is_available", canBeNull = false)
     private boolean isAvailable;
 
-    public Room(String roomNumber, String roomType, float pricePerNight, boolean isAvailable) {
+    public Room() {
+    }
+
+    public Room(int roomNumber, RoomType roomType, float pricePerNight, boolean isAvailable) {
         this.roomNumber = roomNumber;
         this.roomType = roomType;
         this.pricePerNight = pricePerNight;
@@ -45,19 +48,19 @@ public class Room {
         this.pricePerNight = pricePerNight;
     }
 
-    public String getRoomType() {
+    public RoomType getRoomType() {
         return roomType;
     }
 
-    public void setRoomType(String roomType) {
+    public void setRoomType(RoomType roomType) {
         this.roomType = roomType;
     }
 
-    public String getRoomNumber() {
+    public int getRoomNumber() {
         return roomNumber;
     }
 
-    public void setRoomNumber(String roomNumber) {
+    public void setRoomNumber(int roomNumber) {
         this.roomNumber = roomNumber;
     }
 
@@ -67,5 +70,11 @@ public class Room {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    @Override
+    public String toString() {
+        return "Room " + "id=" + id + ", roomNumber=" + roomNumber + ", roomType=" + roomType +
+                ", pricePerNight=" + pricePerNight + ", isAvailable=" + isAvailable;
     }
 }

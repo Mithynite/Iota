@@ -7,6 +7,7 @@ import iota.com.model.Customer;
 import iota.com.model.Gender;
 import iota.com.service.BookingManager;
 import iota.com.service.CustomerManager;
+import iota.com.utils.ValidationUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -39,21 +40,28 @@ public class CustomerMenu {
         try {
             System.out.print("Enter customer's name: ");
             String name = scanner.nextLine();
+            ValidationUtils.validateName(name, "Customer Name");
 
             System.out.print("Enter customer's email: ");
             String email = scanner.nextLine();
+            ValidationUtils.validateEmail(email, "Customer Email");
 
             System.out.print("Enter customer's phone number (optional): ");
             String phone = scanner.nextLine();
+            ValidationUtils.validatePhone(phone, "Phone number");
 
-            System.out.print("Enter customer's gender (MALE/FEMALE/OTHER): ");
-            Gender gender = Gender.valueOf(scanner.nextLine().toUpperCase());
+            System.out.print("Enter customer's gender (Male/Female/Other): ");
+            String genderInput = scanner.nextLine();
+            ValidationUtils.validateEnum(Gender.class, genderInput, "Gender");
+            Gender gender = Gender.valueOf(genderInput.toUpperCase());
 
             System.out.print("Enter customer's birthdate (yyyy-MM-dd): ");
-            Date birthdate = dateFormat.parse(scanner.nextLine());
+            String birthdateInput = scanner.nextLine();
+            ValidationUtils.validateDate(birthdateInput, "Birthdate");
+            Date birthdate = dateFormat.parse(birthdateInput);
 
             Customer customer = new Customer(name, email, phone, gender, birthdate);
-            customerManager.addCustomer(customer); // Persist to DB
+            customerManager.addCustomer(customer);
             System.out.println("Customer added successfully: " + customer);
         } catch (Exception e) {
             System.err.println("Error while adding a customer: " + e.getMessage());
@@ -78,7 +86,10 @@ public class CustomerMenu {
     private void findCustomerById() {
         try {
             System.out.print("Enter Customer ID: ");
-            Long id = Long.parseLong(scanner.nextLine());
+            String idInput = scanner.nextLine();
+            long id = Long.parseLong(idInput);
+            ValidationUtils.validatePositive(id, "Customer ID");
+
             Customer customer = customerManager.findCustomerById(id);
 
             if (customer != null) {
@@ -103,7 +114,10 @@ public class CustomerMenu {
     private void deleteCustomer() {
         try {
             System.out.print("Enter Customer ID to delete: ");
-            Long id = Long.parseLong(scanner.nextLine());
+            String idInput = scanner.nextLine();
+            long id = Long.parseLong(idInput);
+            ValidationUtils.validatePositive(id, "Customer ID");
+
             customerManager.deleteCustomer(id); // Remove from DB
             System.out.println("Customer deleted successfully!");
         } catch (Exception e) {
@@ -114,7 +128,10 @@ public class CustomerMenu {
     private void updateCustomer() {
         try {
             System.out.print("Enter Customer ID to update: ");
-            Long id = Long.parseLong(scanner.nextLine());
+            String idInput = scanner.nextLine();
+            long id = Long.parseLong(idInput);
+            ValidationUtils.validatePositive(id, "Customer ID");
+
             Customer customer = customerManager.findCustomerById(id);
 
             if (customer == null) {
@@ -126,23 +143,28 @@ public class CustomerMenu {
             System.out.println("Updating details for: " + customer);
             System.out.print("Enter new name (leave blank to keep current): ");
             String name = scanner.nextLine();
-            if (!name.trim().isEmpty()) customer.setName(name);
+            ValidationUtils.validateName(name, "Customer Name");
+            customer.setName(name);
 
             System.out.print("Enter new email (leave blank to keep current): ");
             String email = scanner.nextLine();
-            if (!email.trim().isEmpty()) customer.setEmail(email);
+            ValidationUtils.validateEmail(email, "Customer Email");
+            customer.setEmail(email);
 
             System.out.print("Enter new phone number (leave blank to keep current): ");
             String phone = scanner.nextLine();
-            if (!phone.trim().isEmpty()) customer.setPhone(phone);
+            ValidationUtils.validatePhone(phone, "Phone number");
+            customer.setPhone(phone);
 
             System.out.print("Enter new gender (leave blank to keep current): ");
             String genderInput = scanner.nextLine();
-            if (!genderInput.trim().isEmpty()) customer.setGender(Gender.valueOf(genderInput.toUpperCase()));
+            ValidationUtils.validateEnum(Gender.class, genderInput, "Gender");
+            customer.setGender(Gender.valueOf(genderInput.toUpperCase()));
 
             System.out.print("Enter new birthdate (yyyy-MM-dd) (leave blank to keep current): ");
             String birthdateInput = scanner.nextLine();
             if (!birthdateInput.trim().isEmpty()) {
+                ValidationUtils.validateDate(birthdateInput, "Birthdate");
                 Date birthdate = dateFormat.parse(birthdateInput);
                 customer.setBirthdate(birthdate);
             }

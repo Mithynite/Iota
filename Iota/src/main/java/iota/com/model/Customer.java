@@ -13,7 +13,7 @@ public class Customer {
     @Column(name = "id", isPrimaryKey = true, canBeNull = false)
     private Long id;
 
-    @Column(name = "name", canBeNull = false)
+    @Column(name = "customer_name", canBeNull = false)
     private String name;
 
     @Column(name = "email", canBeNull = false)
@@ -25,17 +25,21 @@ public class Customer {
     @Column(name = "gender")
     private Gender gender;
 
+    private String genderAsString;
+
     @Column(name = "birthdate")
     private Date birthdate;
 
     @OneToMany(mappedBy = "customer") // A customer can have multiple bookings
     private List<Booking> bookings;
 
+    public Customer() {}
     public Customer(String name, String email, String phone, Gender gender, Date birthdate) {
         this.name = name;
         this.email = email;
         this.phone = phone;
         this.gender = gender;
+        this.genderAsString = gender.name(); // Convert enum to string
         this.birthdate = birthdate;
     }
 
@@ -63,15 +67,33 @@ public class Customer {
         this.bookings = bookings;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public Gender getGender() {
+        return gender;
+    }
+
+    public String getGenderAsString() {
+        return genderAsString;
+    }
+
+    public Date getBirthdate() {
+        return birthdate;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
     @Override
     public String toString() {
-        return "Customer{" +
-                "name='" + name + '\'' +
-                ", email='" + email + '\'' +
-                ", phone='" + phone + '\'' +
-                ", gender=" + gender +
-                ", birthdate=" + birthdate +
-                ", bookings=" + bookings +
-                '}';
+        return "Customer id='" + id + '\'' + ", name='" + name + '\'' + ", email='" + email + '\'' +
+                ", phone='" + phone + '\'' + ", gender=" + gender + ", birthdate=" + birthdate;
     }
 }

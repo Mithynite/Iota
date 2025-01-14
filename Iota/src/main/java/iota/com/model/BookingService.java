@@ -13,6 +13,8 @@ public class BookingService {
     @Column(name = "service_id", canBeNull = false)
     private Service service;
 
+    public BookingService() {}
+
     public BookingService(Booking booking, Service service) {
         this.booking = booking;
         this.service = service;

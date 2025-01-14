@@ -10,7 +10,7 @@ import java.sql.Connection;
 
 public class Main {
     public static void main(String[] args) {
-        System.out.println("Initializing the Hotel Room Booking System...");
+        System.out.println("Initializing the Hotel Management System...");
 
         // Establish the database connection
         Connection connection = null;
@@ -25,7 +25,7 @@ public class Main {
 
         try {
             // Initialize the service managers
-            EntityManager entityManager = new EntityManager(connection);  // Assume EntityManager is a custom implementation for database operations
+            EntityManager entityManager = new EntityManager(connection);
             RoomManager roomManager = new RoomManager(entityManager);
             CustomerManager customerManager = new CustomerManager(entityManager);
             BookingManager bookingManager = new BookingManager(entityManager);

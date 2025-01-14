@@ -29,6 +29,8 @@ public class Booking {
     @Column(name = "booking_status")
     private BookingStatus bookingStatus;
 
+    public Booking() {}
+
     public Booking(Customer customer, Room room, Date checkInDate, Date checkOutDate, float totalAmount, BookingStatus bookingStatus) {
         this.customer = customer;
         this.room = room;
@@ -96,13 +98,7 @@ public class Booking {
 
     @Override
     public String toString() {
-        return "Booking{" +
-                "customer=" + customer +
-                ", room=" + room +
-                ", checkInDate=" + checkInDate +
-                ", checkOutDate=" + checkOutDate +
-                ", totalAmount=" + totalAmount +
-                ", bookingStatus=" + bookingStatus +
-                '}';
+        return "Booking id=" + id + ", customer=" + customer.getName() + ", room=" + room + ", checkInDate=" + checkInDate + ", checkOutDate=" + checkOutDate +
+                ", totalAmount=" + totalAmount + ", bookingStatus=" + bookingStatus;
     }
 }

@@ -24,7 +24,7 @@ public class AppConsole {
     }
 
     public void start() {
-        Menu mainMenu = new Menu("Welcome to the Room Booking System! What would you like to do?");
+        Menu mainMenu = new Menu("Welcome to the Hotel Management System! What would you like to do?");
         mainMenu.add(new MenuItem("Manage Customers", this::manageCustomers));
         mainMenu.add(new MenuItem("Manage Rooms", this::manageRooms));
         mainMenu.add(new MenuItem("Handle Bookings", this::handleBookings));

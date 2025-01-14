@@ -2,8 +2,6 @@ package iota.com.model;
 
 import iota.com.annotations.*;
 
-import java.util.Date;
-
 @Table(name = "service")
 public class Service {
     @Id
@@ -16,6 +14,8 @@ public class Service {
 
     @Column(name = "price", canBeNull = false)
     private float price;
+
+    public Service(){}
 
     public Service(String name, float price) {
         this.name = name;
