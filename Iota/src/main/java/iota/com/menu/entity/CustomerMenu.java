@@ -7,8 +7,10 @@ import iota.com.model.Customer;
 import iota.com.model.Gender;
 import iota.com.service.BookingManager;
 import iota.com.service.CustomerManager;
+import iota.com.utils.CsvManager;
 import iota.com.utils.ValidationUtils;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -19,10 +21,12 @@ public class CustomerMenu {
     private final BookingManager bookingManager; // To show related bookings for customers
     private final Scanner scanner = new Scanner(System.in);
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); // For handling birthdate input/output
+    private final CsvManager csvManager;
 
-    public CustomerMenu(CustomerManager customerManager, BookingManager bookingManager) {
+    public CustomerMenu(CsvManager csvManager, CustomerManager customerManager, BookingManager bookingManager) {
         this.customerManager = customerManager;
         this.bookingManager = bookingManager;
+        this.csvManager = csvManager;
     }
 
     public void showMenu() {
@@ -32,6 +36,7 @@ public class CustomerMenu {
         menu.add(new MenuItem("Find Customer by ID", this::findCustomerById));
         menu.add(new MenuItem("Delete Customer", this::deleteCustomer));
         menu.add(new MenuItem("Update Customer", this::updateCustomer));
+        menu.add(new MenuItem("Import data from CSV", this::importCustomersFromCsv));
         menu.add(new MenuItem("Back to Main Menu", () -> System.out.println("Returning to the main menu...")));
         menu.execute();
     }
@@ -40,24 +45,24 @@ public class CustomerMenu {
         try {
             System.out.print("Enter customer's name: ");
             String name = scanner.nextLine();
-            ValidationUtils.validateName(name, "Customer Name");
+            ValidationUtils.validateName(name, "Customer Name", false);
 
             System.out.print("Enter customer's email: ");
             String email = scanner.nextLine();
-            ValidationUtils.validateEmail(email, "Customer Email");
+            ValidationUtils.validateEmail(email, "Customer Email", false);
 
             System.out.print("Enter customer's phone number (optional): ");
             String phone = scanner.nextLine();
-            ValidationUtils.validatePhone(phone, "Phone number");
+            ValidationUtils.validatePhone(phone);
 
             System.out.print("Enter customer's gender (Male/Female/Other): ");
             String genderInput = scanner.nextLine();
-            ValidationUtils.validateEnum(Gender.class, genderInput, "Gender");
-            Gender gender = Gender.valueOf(genderInput.toUpperCase());
+            ValidationUtils.validateEnum(Gender.class, genderInput, "Gender", false);
+            Gender gender = Gender.valueOf(genderInput.toLowerCase());
 
             System.out.print("Enter customer's birthdate (yyyy-MM-dd): ");
             String birthdateInput = scanner.nextLine();
-            ValidationUtils.validateDate(birthdateInput, "Birthdate");
+            ValidationUtils.validateDate(birthdateInput, "Birthdate", false);
             Date birthdate = dateFormat.parse(birthdateInput);
 
             Customer customer = new Customer(name, email, phone, gender, birthdate);
@@ -111,68 +116,107 @@ public class CustomerMenu {
         }
     }
 
+    private Customer lookupTheCustomer() throws Exception {
+        String idInput = scanner.nextLine();
+        long id = Long.parseLong(idInput);
+        ValidationUtils.validatePositive(id, "Customer ID");
+
+        return customerManager.findCustomerById(id);
+    }
+
     private void deleteCustomer() {
         try {
             System.out.print("Enter Customer ID to delete: ");
-            String idInput = scanner.nextLine();
-            long id = Long.parseLong(idInput);
-            ValidationUtils.validatePositive(id, "Customer ID");
+            String customerIdInput = scanner.nextLine();
+            long customerId = Long.parseLong(customerIdInput);
+            ValidationUtils.validatePositive(customerId, "Customer ID");
 
-            customerManager.deleteCustomer(id); // Remove from DB
-            System.out.println("Customer deleted successfully!");
+            customerManager.deleteCustomerWithBookings(customerId);
+
+            System.out.println("Customer and all associated bookings deleted successfully!");
         } catch (Exception e) {
-            System.err.println("Failed to delete customer: " + e.getMessage());
+            System.err.println("Failed to delete customer and their bookings: " + e.getMessage());
         }
     }
+
+
 
     private void updateCustomer() {
         try {
             System.out.print("Enter Customer ID to update: ");
-            String idInput = scanner.nextLine();
-            long id = Long.parseLong(idInput);
-            ValidationUtils.validatePositive(id, "Customer ID");
 
-            Customer customer = customerManager.findCustomerById(id);
+            Customer customer = lookupTheCustomer();
 
             if (customer == null) {
-                System.out.println("No customer found with ID: " + id);
+                System.out.println("No customer with the ID!");
                 return;
             }
 
             // Update customer details
             System.out.println("Updating details for: " + customer);
+
             System.out.print("Enter new name (leave blank to keep current): ");
             String name = scanner.nextLine();
-            ValidationUtils.validateName(name, "Customer Name");
-            customer.setName(name);
+            if (!name.isBlank()) {
+                ValidationUtils.validateName(name, "Customer Name", true);
+                customer.setName(name);
+            }
 
             System.out.print("Enter new email (leave blank to keep current): ");
             String email = scanner.nextLine();
-            ValidationUtils.validateEmail(email, "Customer Email");
-            customer.setEmail(email);
+            if (!email.isBlank()) {
+                ValidationUtils.validateEmail(email, "Customer Email", true);
+                customer.setEmail(email);
+            }
 
             System.out.print("Enter new phone number (leave blank to keep current): ");
             String phone = scanner.nextLine();
-            ValidationUtils.validatePhone(phone, "Phone number");
-            customer.setPhone(phone);
+            if (!phone.isBlank()) { // Only update if not blank
+                ValidationUtils.validatePhone(phone);
+                customer.setPhone(phone);
+            }
 
             System.out.print("Enter new gender (leave blank to keep current): ");
             String genderInput = scanner.nextLine();
-            ValidationUtils.validateEnum(Gender.class, genderInput, "Gender");
-            customer.setGender(Gender.valueOf(genderInput.toUpperCase()));
+            if (!genderInput.isBlank()) {
+                ValidationUtils.validateEnum(Gender.class, genderInput, "Gender", true);
+                customer.setGender(Gender.valueOf(genderInput.toLowerCase()));
+            }
 
             System.out.print("Enter new birthdate (yyyy-MM-dd) (leave blank to keep current): ");
             String birthdateInput = scanner.nextLine();
-            if (!birthdateInput.trim().isEmpty()) {
-                ValidationUtils.validateDate(birthdateInput, "Birthdate");
+            if (!birthdateInput.isBlank()) {
+                ValidationUtils.validateDate(birthdateInput, "Birthdate", true);
                 Date birthdate = dateFormat.parse(birthdateInput);
                 customer.setBirthdate(birthdate);
             }
 
-            customerManager.updateCustomer(customer); // Persist updated data
+            customerManager.updateCustomer(customer);
             System.out.println("Customer updated successfully: " + customer);
         } catch (Exception e) {
             System.err.println("Error while updating customer: " + e.getMessage());
         }
     }
+
+    private void importCustomersFromCsv() {
+        System.out.print("Enter the absolute path to the CSV file (e.g. C:\\Downloads\\file.csv): ");
+        String csvFilePath = scanner.nextLine();
+
+        // Check if the file exists before proceeding
+        File file = new File(csvFilePath);
+        if (!file.exists()) {
+            System.err.println("Error: File not found at " + csvFilePath);
+            return;
+        }
+
+        List<String> columnMapping = List.of("name", "email", "phone", "gender", "birthdate");
+
+        try {
+            csvManager.importCsv(Customer.class, csvFilePath, columnMapping);
+            System.out.println("Customers imported successfully from " + csvFilePath);
+        } catch (Exception e) {
+            System.err.println("Error importing customers from the file. Please check its structure and try again! ");
+        }
+    }
+
 }

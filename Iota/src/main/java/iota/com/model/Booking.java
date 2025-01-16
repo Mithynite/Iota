@@ -2,6 +2,7 @@ package iota.com.model;
 
 import iota.com.annotations.*;
 
+import iota.com.annotations.Transient;
 import java.util.Date;
 
 @Table(name = "booking")
@@ -11,12 +12,16 @@ public class Booking {
     @Column(name = "id", isPrimaryKey = true, canBeNull = false)
     private Long id;
 
-    @ManyToOne(foreignKeyName = "customer_id") // Foreign key to customer
-    @Column(name = "customer_id", canBeNull = false)
+    @Column(name = "customer_id")
+    private Long customerId; // Store Customer's ID as FK
+
+    @Column(name = "room_id")
+    private Long roomId; // Store Room's ID as FK
+
+    @Transient // Not persisted, for runtime use only
     private Customer customer;
 
-    @ManyToOne(foreignKeyName = "room_id")
-    @Column(name = "room_id", canBeNull = false)
+    @Transient // Not persisted, for runtime use only
     private Room room;
 
     @Column(name = "check_in_date", canBeNull = false)
@@ -34,6 +39,8 @@ public class Booking {
     public Booking(Customer customer, Room room, Date checkInDate, Date checkOutDate, float totalAmount, BookingStatus bookingStatus) {
         this.customer = customer;
         this.room = room;
+        this.customerId = customer.getId();
+        this.roomId = room.getId();
         this.checkInDate = checkInDate;
         this.checkOutDate = checkOutDate;
         this.totalAmount = totalAmount;
@@ -94,6 +101,22 @@ public class Booking {
 
     public void setBookingStatus(BookingStatus bookingStatus) {
         this.bookingStatus = bookingStatus;
+    }
+
+    public Long getCustomerId() {
+        return customerId;
+    }
+
+    public void setCustomerId(Long customerId) {
+        this.customerId = customerId;
+    }
+
+    public Long getRoomId() {
+        return roomId;
+    }
+
+    public void setRoomId(Long roomId) {
+        this.roomId = roomId;
     }
 
     @Override

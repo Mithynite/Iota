@@ -1,20 +1,43 @@
 package iota.com.core;
 
+import iota.com.utils.ReflectionUtils;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-/***
- * Performs CRUD operations (save, update, delete, findById, findAll) for entity classes.
- * Uses reflection (via ReflectionUtils) to map an object's fields and annotations (e.g., @Column) to database tables.
+/**
+ * Manages database interactions and handles transactions for CRUD operations.
  */
 public class EntityManager {
     private final Connection connection;
 
     public EntityManager(Connection connection) {
         this.connection = connection;
+    }
+
+    // Transactions handling methods
+    public void beginTransaction() throws SQLException {
+        if (connection != null && connection.getAutoCommit()) {
+            connection.setAutoCommit(false); // Begin a new transaction
+        }
+    }
+
+    public void commitTransaction() throws SQLException {
+        if (connection != null && !connection.getAutoCommit()) {
+            connection.commit(); // Commit the transaction
+            connection.setAutoCommit(true); // Reset to default
+        }
+    }
+
+    public void rollbackTransaction() throws SQLException {
+        if (connection != null && !connection.getAutoCommit()) {
+            connection.rollback(); // Roll back the transaction
+            connection.setAutoCommit(true); // Reset to default
+        }
     }
 
     // INSERT entity into database
@@ -61,16 +84,6 @@ public class EntityManager {
         }
     }
 
-    /**
-     * Query method for retrieving a list of entities based on a custom query.
-     *
-     * @param clazz    The entity class
-     * @param sql      The SQL query string
-     * @param params   A list of parameters to bind to the query
-     * @param <T>      The entity type
-     * @return List of entities matching the query
-     * @throws Exception If any error occurs
-     */
     public <T> List<T> query(Class<T> clazz, String sql, List<Object> params) throws Exception {
         List<T> result = new ArrayList<>();
 

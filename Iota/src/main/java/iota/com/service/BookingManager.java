@@ -16,24 +16,32 @@ public class BookingManager {
         this.entityManager = entityManager;
     }
 
-    /**
-     * Create a new booking and update room availability
-     */
     public void createBooking(Customer customer, Room room, Date checkInDate, Date checkOutDate, float totalAmount) throws Exception {
-        // Check room availability
-        Room dbRoom = entityManager.find(Room.class, room.getId());
-        if (dbRoom == null || !dbRoom.isAvailable()) {
-            throw new IllegalStateException("Room with ID " + room.getId() + " is unavailable.");
+        // Start transaction in your EntityManager
+        entityManager.beginTransaction();
+        try {
+            // 1. Validate Room Availability
+            Room dbRoom = entityManager.find(Room.class, room.getId());
+            if (dbRoom == null || !dbRoom.isAvailable()) {
+                throw new IllegalStateException("Room with ID " + room.getId() + " is unavailable.");
+            }
+
+            // 2. Persist Booking
+            Booking booking = new Booking(customer, dbRoom, checkInDate, checkOutDate, totalAmount, BookingStatus.pending);
+            entityManager.persist(booking);
+
+            // 3. Update Room to unavailable
+            dbRoom.setAvailable(false);
+            entityManager.update(dbRoom);
+
+            // Commit transaction
+            entityManager.commitTransaction();
+        } catch (Exception ex) {
+            entityManager.rollbackTransaction(); // Rollback transaction on failure
+            throw new RuntimeException("Failed to create booking: " + ex.getMessage());
         }
-
-        // Create new booking
-        Booking booking = new Booking(customer, dbRoom, checkInDate, checkOutDate, totalAmount, BookingStatus.PENDING);
-        entityManager.persist(booking);
-
-        // Mark room as unavailable
-        dbRoom.setAvailable(false);
-        entityManager.update(dbRoom);
     }
+
 
     /**
      * Get booking by ID
@@ -64,6 +72,7 @@ public class BookingManager {
      * Retrieve all bookings for a given customer ID
      */
     public List<Booking> getBookingsForCustomer(Long customerId) throws Exception {
+        // Check if the customer exists
         Customer customer = entityManager.find(Customer.class, customerId);
         if (customer == null) {
             throw new IllegalArgumentException("No customer found with ID " + customerId);
@@ -71,19 +80,45 @@ public class BookingManager {
 
         // Query all bookings for this customer
         String query = "SELECT * FROM booking WHERE customer_id = ?";
-        return entityManager.query(Booking.class, query, List.of(customerId));
+        List<Booking> bookings = entityManager.query(Booking.class, query, List.of(customerId));
+
+        // Validate if bookings include populated customer objects
+        bookings.forEach(booking -> {
+            if (booking.getCustomer() == null) {
+                booking.setCustomer(customer); // Fix null customers, if needed
+            }
+        });
+
+        return bookings;
     }
 
-    /**
-     * Update booking status
-     */
+
     public void updateBookingStatus(Long bookingId, BookingStatus newStatus) throws Exception {
-        Booking booking = entityManager.find(Booking.class, bookingId);
-        if (booking == null) {
-            throw new IllegalArgumentException("No booking found with ID " + bookingId);
-        }
+        // Begin transaction
+        entityManager.beginTransaction();
+        try {
+            Booking booking = entityManager.find(Booking.class, bookingId);
+            if (booking == null) {
+                throw new IllegalArgumentException("No booking found with ID " + bookingId);
+            }
 
-        booking.setBookingStatus(newStatus);
-        entityManager.update(booking);
+            // Update booking status
+            booking.setBookingStatus(newStatus);
+            entityManager.update(booking);
+
+            Room room = entityManager.find(Room.class, booking.getRoomId());
+
+            // Retrieve associated room and update its availability
+            room.setAvailable(newStatus == BookingStatus.cancelled);
+
+            entityManager.update(room);
+
+            // Commit transaction
+            entityManager.commitTransaction();
+        } catch (Exception ex) {
+            entityManager.rollbackTransaction(); // Roll back if any error occurs
+            throw new RuntimeException("Failed to update booking status: " + ex.getMessage());
+        }
     }
+
 }

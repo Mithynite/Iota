@@ -1,5 +1,5 @@
 package iota.com.model;
 
 public enum RoomType {
-    Single, Double, Suite
+    single, twin, suite
 }

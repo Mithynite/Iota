@@ -2,6 +2,7 @@ package iota.com.core;
 
 import iota.com.annotations.Column;
 import iota.com.annotations.Table;
+import iota.com.utils.ReflectionUtils;
 
 import java.lang.reflect.Field;
 import java.sql.PreparedStatement;

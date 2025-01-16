@@ -1,20 +1,22 @@
 package iota.com.utils;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+
 public class ValidationUtils {
 
     // Universal Regex patterns
     private static final String email_pattern = "^[A-Za-z0-9]+@[A-Za-z0-9]+\\.[A-Za-z]{2,}$";
     private static final String phone_pattern = "^\\d{8,15}$";
     private static final String name_pattern = "^[A-Za-z\\s'-]{2,50}$";
-    private static final String date_patern = "^\\d{4}-\\d{2}-\\d{2}$";
-    private static final String word_pattern = "^[A-Za-z\\s'-]+$";
 
     /**
      * Validates a name.
      */
-    public static void validateName(String name, String fieldName) {
-        validateNotBlank(name, fieldName);
-        if (!name.matches(name_pattern)) {
+    public static void validateName(String name, String fieldName, boolean canBeEmpty) {
+        validateNotBlank(name, fieldName, canBeEmpty);
+        if (!name.matches(name_pattern) && !canBeEmpty) {
             throw new IllegalArgumentException("Invalid name!");
         }
     }
@@ -22,9 +24,9 @@ public class ValidationUtils {
     /**
      * Validates an email address.
      */
-    public static void validateEmail(String email, String fieldName) {
-        validateNotBlank(email, fieldName);
-        if (!email.matches(email_pattern)) {
+    public static void validateEmail(String email, String fieldName, boolean canBeEmpty) {
+        validateNotBlank(email, fieldName, canBeEmpty);
+        if (!email.matches(email_pattern) && !canBeEmpty) {
             throw new IllegalArgumentException("Invalid email format! Example: user@example.com");
         }
     }
@@ -32,30 +34,28 @@ public class ValidationUtils {
     /**
      * Validates a phone number (digits only, 8-15 characters).
      */
-    public static void validatePhone(String phone, String fieldName) {
-        validateNotBlank(phone, fieldName);
-        if (!phone.matches(phone_pattern)) {
-            throw new IllegalArgumentException("Invalid phone number! Use only digits (8-15 characters).");
-        }
-    }
-
-    /**
-     * Validates generic "word-based" input (e.g., names, etc.)
-     */
-    public static void validateWord(String word, String fieldName) {
-        validateNotBlank(word, fieldName);
-        if (!word.matches(word_pattern)) {
-            throw new IllegalArgumentException(fieldName + " contains invalid characters! Only letters, spaces, hyphens, and apostrophes are allowed.");
-        }
+    public static void validatePhone(String phone) {
+        if (!phone.trim().isEmpty() && !phone.matches(phone_pattern)) {
+                throw new IllegalArgumentException("Invalid phone number! Use only digits (8-15 characters).");
+            }
     }
 
     /**
      * Validates a generic date in the format yyyy-MM-dd
      */
-    public static void validateDate(String date, String fieldName) {
-        validateNotBlank(date, fieldName);
-        if (!date.matches(date_patern)) {
-            throw new IllegalArgumentException("Invalid " + fieldName + " format! Use yyyy-MM-dd.");
+    public static void validateDate(String date, String fieldName, boolean canBeEmpty) {
+        validateNotBlank(date, fieldName, canBeEmpty);
+
+        if (!canBeEmpty) {
+            // Define the date format
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+            try {
+                // Parse the date to ensure it's valid
+                LocalDate.parse(date, formatter);
+            } catch (DateTimeParseException e) {
+                throw new IllegalArgumentException("Invalid " + fieldName + " format or value! Use 'yyyy-MM-dd'.");
+            }
         }
     }
 
@@ -80,14 +80,16 @@ public class ValidationUtils {
     /**
      * Validates if a value belongs to a specific enum type.
      */
-    public static void validateEnum(Class<? extends Enum<?>> enumClass, String value, String fieldName) {
-        validateNotBlank(value, fieldName); // Ensure the value is not null/blank
-        for (Enum<?> enumConstant : enumClass.getEnumConstants()) {
-            if (enumConstant.name().equalsIgnoreCase(value)) { // Case-insensitive comparison
-                return; // Match found, validation passes
+    public static void validateEnum(Class<? extends Enum<?>> enumClass, String value, String fieldName, boolean canBeEmpty) {
+        validateNotBlank(value, fieldName, canBeEmpty); // Ensure the value is not null/blank
+        if (!canBeEmpty) {
+            for (Enum<?> enumConstant : enumClass.getEnumConstants()) {
+                if (enumConstant.name().equalsIgnoreCase(value)) {
+                    return;
+                }
             }
+            throw new IllegalArgumentException("Invalid " + fieldName + "! Allowed values are: " + getEnumValues(enumClass));
         }
-        throw new IllegalArgumentException("Invalid " + fieldName + "! Allowed values are: " + getEnumValues(enumClass));
     }
 
     // Helper method to list valid enum values
@@ -106,8 +108,8 @@ public class ValidationUtils {
     /**
      * Reusable method to check for blank or null fields.
      */
-    public static void validateNotBlank(String field, String fieldName) {
-        if (field == null || field.trim().isEmpty()) {
+    public static void validateNotBlank(String field, String fieldName, boolean canBeEmpty) {
+        if (field == null || (field.trim().isEmpty()) && !canBeEmpty) {
             throw new IllegalArgumentException(fieldName + " cannot be null or blank!");
         }
     }

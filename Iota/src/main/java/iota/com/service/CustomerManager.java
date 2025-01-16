@@ -2,6 +2,7 @@ package iota.com.service;
 
 import iota.com.core.EntityManager;
 import iota.com.model.Customer;
+import iota.com.model.Booking;
 
 import java.util.List;
 
@@ -32,5 +33,30 @@ public class CustomerManager {
     public void deleteCustomer(Long id) throws Exception {
         entityManager.delete(Customer.class, id);
     }
-}
 
+    /**
+     * Delete customer and their related bookings as a single transaction.
+     */
+    public void deleteCustomerWithBookings(Long customerId) throws Exception {
+        entityManager.beginTransaction();
+        try {
+            Customer customer = findCustomerById(customerId);
+            if (customer == null) {
+                throw new IllegalArgumentException("No customer found with ID: " + customerId);
+            }
+
+            String bookingQuery = "SELECT * FROM booking WHERE customer_id = ?";
+            List<Booking> bookings = entityManager.query(Booking.class, bookingQuery, List.of(customerId));
+
+            for (Booking booking : bookings) {
+                entityManager.delete(Booking.class, booking.getId());
+            }
+
+            entityManager.delete(Customer.class, customerId);
+            entityManager.commitTransaction();
+        } catch (Exception e) {
+            entityManager.rollbackTransaction();
+            throw e; // Propagate the exception
+        }
+    }
+}

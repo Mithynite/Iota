@@ -8,16 +8,19 @@ import iota.com.menu.entity.RoomMenu;
 import iota.com.service.BookingManager;
 import iota.com.service.CustomerManager;
 import iota.com.service.RoomManager;
+import iota.com.utils.CsvManager;
 
 import java.util.Scanner;
 
 public class AppConsole {
     private final Scanner scanner = new Scanner(System.in);
+    private final CsvManager csvManager;
     private final RoomManager roomManager;
     private final CustomerManager customerManager;
     private final BookingManager bookingManager;
 
-    public AppConsole(RoomManager roomManager, CustomerManager customerManager, BookingManager bookingManager) {
+    public AppConsole(CsvManager csvManager, RoomManager roomManager, CustomerManager customerManager, BookingManager bookingManager) {
+        this.csvManager = csvManager;
         this.roomManager = roomManager;
         this.customerManager = customerManager;
         this.bookingManager = bookingManager;
@@ -36,17 +39,16 @@ public class AppConsole {
     }
 
     private void manageCustomers() {
-        CustomerMenu customerMenu = new CustomerMenu(customerManager,bookingManager);
+        CustomerMenu customerMenu = new CustomerMenu(csvManager, customerManager,bookingManager);
         customerMenu.showMenu();
     }
 
     private void manageRooms() {
-        RoomMenu roomMenu = new RoomMenu(roomManager);
+        RoomMenu roomMenu = new RoomMenu(roomManager, csvManager);
         roomMenu.showMenu();
     }
 
     private void handleBookings() {
-        // Pass all three managers to BookingMenu for full functionality
         BookingMenu bookingMenu = new BookingMenu(bookingManager, customerManager, roomManager);
         bookingMenu.showMenu();
     }

@@ -34,9 +34,6 @@ public class DatabaseSingleton {
         return connection;
     }
 
-    /**
-     * Close the database connection.
-     */
     public static void closeConnection() {
         if (connection != null) {
             try {
@@ -53,7 +50,7 @@ public class DatabaseSingleton {
 
         try (InputStream input = DatabaseSingleton.class
                 .getClassLoader()
-                .getResourceAsStream("config.properties")) {  // Reference relative to 'src/main/resources'
+                .getResourceAsStream("config.properties")) {
 
             if (input == null) {
                 throw new IOException("Database configuration file 'config.properties' not found.");

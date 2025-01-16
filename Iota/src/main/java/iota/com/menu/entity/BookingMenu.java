@@ -33,7 +33,6 @@ public class BookingMenu {
         Menu bookingMenu = new Menu("Booking Management");
         bookingMenu.add(new MenuItem("Create New Booking", this::createBooking));
         bookingMenu.add(new MenuItem("List Customer Bookings", this::listBookingsForCustomer));
-        bookingMenu.add(new MenuItem("Cancel Booking", this::cancelBooking));
         bookingMenu.add(new MenuItem("Update Booking Status", this::updateBookingStatus));
         bookingMenu.add(new MenuItem("Back to Main Menu", () -> System.out.println("Returning to main menu...")));
         bookingMenu.execute();
@@ -71,12 +70,12 @@ public class BookingMenu {
 
             System.out.print("Enter Check-In Date (yyyy-MM-dd): ");
             String checkInDateInput = scanner.nextLine();
-            ValidationUtils.validateDate(checkInDateInput, "Check-In Date");
+            ValidationUtils.validateDate(checkInDateInput, "Check-In Date", false);
             Date checkInDate = dateFormat.parse(checkInDateInput);
 
             System.out.print("Enter Check-Out Date (yyyy-MM-dd): ");
             String checkOutDateInput = scanner.nextLine();
-            ValidationUtils.validateDate(checkOutDateInput, "Check-Out Date");
+            ValidationUtils.validateDate(checkOutDateInput, "Check-Out Date", false);
             Date checkOutDate = dateFormat.parse(checkOutDateInput);
 
             if (!checkInDate.before(checkOutDate)) {
@@ -115,22 +114,6 @@ public class BookingMenu {
     }
 
     /**
-     * Cancel a booking
-     */
-    private void cancelBooking() {
-        try {
-            System.out.print("Enter Booking ID to cancel: ");
-            String bookingIdInput = scanner.nextLine();
-            long bookingId = Long.parseLong(bookingIdInput);
-            ValidationUtils.validatePositive(bookingId, "Booking ID");
-            bookingManager.cancelBooking(bookingId);
-            System.out.println("Booking canceled successfully!");
-        } catch (Exception e) {
-            System.err.println("Error while canceling booking: " + e.getMessage());
-        }
-    }
-
-    /**
      * Update booking status
      */
     private void updateBookingStatus() {
@@ -140,19 +123,27 @@ public class BookingMenu {
             long bookingId = Long.parseLong(bookingIdInput);
             ValidationUtils.validatePositive(bookingId, "Booking ID");
 
+            Booking booking = bookingManager.getBooking(bookingId);
+            if (booking == null) {
+                System.out.println("No Booking with ID " + bookingId + " was found!");
+                return;
+            }
+
             System.out.println("Select New Status:");
             for (BookingStatus status : BookingStatus.values()) {
                 System.out.println("- " + status.name());
             }
+
             System.out.print("Enter Status: ");
             String newStatusString = scanner.nextLine();
-            ValidationUtils.validateEnum(BookingStatus.class, newStatusString, "Booking Status");
+            BookingStatus newStatus = BookingStatus.valueOf(newStatusString.toLowerCase());
 
-            BookingStatus newStatus = BookingStatus.valueOf(newStatusString.toUpperCase());
             bookingManager.updateBookingStatus(bookingId, newStatus);
+
             System.out.println("Booking status updated to " + newStatus.name() + " successfully!");
         } catch (Exception e) {
             System.err.println("Error while updating booking status: " + e.getMessage());
         }
     }
+
 }
